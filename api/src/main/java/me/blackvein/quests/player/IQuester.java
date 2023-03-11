@@ -12,12 +12,12 @@
 
 package me.blackvein.quests.player;
 
-import me.blackvein.quests.quests.IQuest;
-import me.blackvein.quests.quests.IStage;
-import me.blackvein.quests.quests.Objective;
 import me.blackvein.quests.QuestData;
 import me.blackvein.quests.enums.ObjectiveType;
 import me.blackvein.quests.module.ICustomObjective;
+import me.blackvein.quests.quests.IQuest;
+import me.blackvein.quests.quests.IStage;
+import me.blackvein.quests.quests.Objective;
 import org.bukkit.DyeColor;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
@@ -28,11 +28,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.function.BiFunction;
@@ -211,7 +208,7 @@ public interface IQuester extends Comparable<IQuester> {
 
     void addEmptiesFor(final IQuest quest, final int stage);
 
-    boolean saveData();
+    CompletableFuture<Boolean> saveData();
 
     long getCompletionDifference(final IQuest quest);
 

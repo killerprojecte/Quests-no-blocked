@@ -28,7 +28,6 @@ import me.blackvein.quests.convo.misc.NpcOfferQuestPrompt;
 import me.blackvein.quests.dependencies.DenizenTrigger;
 import me.blackvein.quests.dependencies.IDependencies;
 import me.blackvein.quests.entity.BukkitQuestMob;
-import me.blackvein.quests.entity.CountableMob;
 import me.blackvein.quests.entity.QuestMob;
 import me.blackvein.quests.events.misc.MiscPostQuestAcceptEvent;
 import me.blackvein.quests.exceptions.ActionFormatException;
@@ -36,39 +35,17 @@ import me.blackvein.quests.exceptions.ConditionFormatException;
 import me.blackvein.quests.exceptions.QuestFormatException;
 import me.blackvein.quests.exceptions.StageFormatException;
 import me.blackvein.quests.interfaces.ReloadCallback;
-import me.blackvein.quests.listeners.BlockListener;
-import me.blackvein.quests.listeners.CitizensListener;
-import me.blackvein.quests.listeners.CommandManager;
-import me.blackvein.quests.listeners.ConvoListener;
-import me.blackvein.quests.listeners.ItemListener;
-import me.blackvein.quests.listeners.PartiesListener;
-import me.blackvein.quests.listeners.PlayerListener;
-import me.blackvein.quests.listeners.UniteListener;
-import me.blackvein.quests.listeners.ZnpcsListener;
+import me.blackvein.quests.listeners.*;
 import me.blackvein.quests.logging.QuestsLog4JFilter;
 import me.blackvein.quests.module.ICustomObjective;
 import me.blackvein.quests.player.IQuester;
-import me.blackvein.quests.quests.BukkitObjective;
-import me.blackvein.quests.quests.BukkitQuestFactory;
-import me.blackvein.quests.quests.IQuest;
-import me.blackvein.quests.quests.IStage;
-import me.blackvein.quests.quests.Objective;
-import me.blackvein.quests.quests.Options;
-import me.blackvein.quests.quests.Planner;
-import me.blackvein.quests.quests.QuestFactory;
-import me.blackvein.quests.quests.Requirements;
-import me.blackvein.quests.quests.Rewards;
+import me.blackvein.quests.quests.*;
 import me.blackvein.quests.statistics.Metrics;
 import me.blackvein.quests.storage.Storage;
 import me.blackvein.quests.storage.StorageFactory;
 import me.blackvein.quests.tasks.NpcEffectThread;
 import me.blackvein.quests.tasks.PlayerMoveThread;
-import me.blackvein.quests.util.ConfigUtil;
-import me.blackvein.quests.util.ItemUtil;
-import me.blackvein.quests.util.Lang;
-import me.blackvein.quests.util.MiscUtil;
-import me.blackvein.quests.util.RomanNumeral;
-import me.blackvein.quests.util.UpdateChecker;
+import me.blackvein.quests.util.*;
 import me.clip.placeholderapi.PlaceholderAPI;
 import me.pikamug.localelib.LocaleManager;
 import net.citizensnpcs.api.CitizensAPI;
@@ -76,14 +53,7 @@ import net.citizensnpcs.api.npc.NPC;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.apache.logging.log4j.LogManager;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Color;
-import org.bukkit.DyeColor;
-import org.bukkit.Effect;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.block.Biome;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.TabExecutor;
@@ -108,31 +78,14 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
+import java.io.*;
 import java.lang.reflect.Constructor;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
-import java.util.AbstractMap;
-import java.util.Collection;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -742,11 +695,13 @@ public class Quests extends JavaPlugin implements QuestsAPI {
                 if (quester == null) {
                     // Must be new player
                     quester = new Quester(Quests.this, player.getUniqueId());
-                    if (quester.saveData()) {
-                        getLogger().info("Created new data for player " + player.getName());
-                    } else {
-                        Lang.send(player, ChatColor.RED + Lang.get(player, "questSaveError"));
-                    }
+                    quester.saveData().thenAccept(status -> {
+                        if (status) {
+                            getLogger().info("Created new data for player " + player.getName());
+                        } else {
+                            Lang.send(player, ChatColor.RED + Lang.get(player, "questSaveError"));
+                        }
+                    });
                 }
                 final String questIdToTake = quester.getQuestIdToTake();
                 try {

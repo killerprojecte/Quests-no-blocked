@@ -25,39 +25,20 @@ import me.blackvein.quests.entity.CountableMob;
 import me.blackvein.quests.enums.ObjectiveType;
 import me.blackvein.quests.events.quest.QuestQuitEvent;
 import me.blackvein.quests.events.quest.QuestTakeEvent;
-import me.blackvein.quests.events.quester.QuesterPostStartQuestEvent;
-import me.blackvein.quests.events.quester.QuesterPostUpdateObjectiveEvent;
-import me.blackvein.quests.events.quester.QuesterPreOpenGUIEvent;
-import me.blackvein.quests.events.quester.QuesterPreStartQuestEvent;
-import me.blackvein.quests.events.quester.QuesterPreUpdateObjectiveEvent;
+import me.blackvein.quests.events.quester.*;
 import me.blackvein.quests.item.QuestJournal;
 import me.blackvein.quests.module.ICustomObjective;
 import me.blackvein.quests.nms.ActionBarProvider;
 import me.blackvein.quests.nms.TitleProvider;
 import me.blackvein.quests.player.IQuester;
-import me.blackvein.quests.quests.BukkitObjective;
-import me.blackvein.quests.quests.IQuest;
-import me.blackvein.quests.quests.IStage;
-import me.blackvein.quests.quests.Objective;
-import me.blackvein.quests.quests.Planner;
-import me.blackvein.quests.quests.Requirements;
+import me.blackvein.quests.quests.*;
 import me.blackvein.quests.tasks.StageTimer;
-import me.blackvein.quests.util.ConfigUtil;
-import me.blackvein.quests.util.InventoryUtil;
-import me.blackvein.quests.util.ItemUtil;
-import me.blackvein.quests.util.Lang;
-import me.blackvein.quests.util.MiscUtil;
-import me.blackvein.quests.util.RomanNumeral;
+import me.blackvein.quests.util.*;
 import me.clip.placeholderapi.PlaceholderAPI;
 import me.pikamug.localelib.LocaleManager;
 import me.pikamug.unite.api.objects.PartyProvider;
 import net.citizensnpcs.api.CitizensAPI;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.DyeColor;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.OfflinePlayer;
+import org.bukkit.*;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -74,19 +55,9 @@ import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 import org.bukkit.material.Crops;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.Random;
-import java.util.Set;
-import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.function.BiFunction;
@@ -4470,20 +4441,22 @@ public class Quester implements IQuester {
         data.setDoJournalUpdate(true);
         hardDataPut(quest, data);
     }
-    
+
 
     /**
      * Save data of the Quester to file
-     * 
-     * @return true if successful
      */
-    public boolean saveData() {
-        try {
-            plugin.getStorage().saveQuester(this).get();
-        } catch (final Exception e) {
-            return false;
-        }
-        return true;
+    public CompletableFuture<Boolean> saveData() {
+        CompletableFuture<Boolean> future = new CompletableFuture<>();
+        plugin.getStorage().saveQuester(this)
+                .thenAccept(unused -> future.complete(true)).exceptionally(new Function<Throwable, Void>() {
+                    @Override
+                    public Void apply(Throwable throwable) {
+                        future.complete(false);
+                        return null;
+                    }
+                });
+        return future;
     }
     
     /**
